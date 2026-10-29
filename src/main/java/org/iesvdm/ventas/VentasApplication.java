@@ -1,7 +1,7 @@
 package org.iesvdm.ventas;
 
-import org.iesvdm.dao.ClienteDAO;
-import org.iesvdm.modelo.Cliente;
+import org.iesvdm.dao.ComercialDAO;
+import org.iesvdm.modelo.Comercial;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -12,11 +12,10 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class VentasApplication implements CommandLineRunner {
 
-    private final ClienteDAO clienteDAO;
+    private final ComercialDAO comercialDAO;
 
-    // Inyectamos el DAO directamente
-    public VentasApplication(ClienteDAO clienteDAO) {
-        this.clienteDAO = clienteDAO;
+    public VentasApplication(ComercialDAO comercialDAO) {
+        this.comercialDAO = comercialDAO;
     }
 
     public static void main(String[] args) {
@@ -25,13 +24,15 @@ public class VentasApplication implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        // Probamos el método getAll() del DAO al arrancar la app
-        int totalClientes = clienteDAO.getAll().size();
-        log.info("¡Clientes disponibles en la base de datos: {}!", totalClientes);
+        // Pruebas solicitadas para ComercialDAO mediante CommandLineRunner
+        log.info("=== PRUEBAS DE ComercialDAO EN COMMANDLINERUNNER ===");
+        
+        int totalComerciales = comercialDAO.getAll().size();
+        log.info("Devueltos {} comerciales.", totalComerciales);
 
-        // O si quieres ver los datos por consola:
-        for (Cliente cliente : clienteDAO.getAll()) {
-            log.info("Cliente: {} {}", cliente.getNombre(), cliente.getApellido1());
+        for (Comercial comercial : comercialDAO.getAll()) {
+            log.info("Comercial -> ID: {}, Nombre: {} {}, Comisión: {}", 
+                    comercial.getId(), comercial.getNombre(), comercial.getApellido1(), comercial.getComision());
         }
     }
 }
