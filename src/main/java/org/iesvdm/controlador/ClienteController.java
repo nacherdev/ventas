@@ -5,13 +5,13 @@ import java.util.List;
 import org.iesvdm.modelo.Cliente;
 import org.iesvdm.servicios.ClienteService;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.web.servlet.view.RedirectView;
 
@@ -19,13 +19,29 @@ import org.springframework.web.servlet.view.RedirectView;
 @Controller 
 public class ClienteController {
 
-    @Autowired 
-    private ClienteService clienteService;
+    private final ClienteService clienteService;
+
+    public ClienteController(ClienteService clienteService) {
+        this.clienteService = clienteService;
+    }
 
     @GetMapping("/clientes")
-    public String listar(Model model) {
-        List<Cliente> clientes = clienteService.listAll();
+    public String listar(@RequestParam(required = false) String ciudad, Model model) {
+        return mostrarClientes(ciudad, model);
+    }
+
+    @GetMapping("/clientes/ciudad/{ciudad}")
+    public String listarPorCiudad(@PathVariable String ciudad, Model model) {
+        return mostrarClientes(ciudad, model);
+    }
+
+    private String mostrarClientes(String ciudad, Model model) {
+        String ciudadFiltro = ciudad == null ? null : ciudad.trim();
+        List<Cliente> clientes = ciudadFiltro == null || ciudadFiltro.isEmpty()
+                ? clienteService.listAll()
+                : clienteService.listByCiudad(ciudadFiltro);
         model.addAttribute("clientes", clientes);
+        model.addAttribute("ciudad", ciudadFiltro);
         return "clientes";
     }
 
