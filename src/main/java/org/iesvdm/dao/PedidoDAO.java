@@ -9,6 +9,8 @@ import org.iesvdm.modelo.PedidoDetalle;
 public interface PedidoDAO {
 	void create(Pedido pedido);
 	List<PedidoDetalle> getAllDetails();
+	List<PedidoDetalle> findByComercialId(int comercialId);
+	List<PedidoDetalle> findByClienteId(int clienteId);
 	Optional<Pedido> find(int id);
 	Optional<PedidoDetalle> findDetail(int id);
 	void update(Pedido pedido);

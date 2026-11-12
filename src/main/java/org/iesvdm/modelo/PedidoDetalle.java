@@ -15,4 +15,5 @@ public class PedidoDetalle {
 	private LocalDate fecha;
 	private String clienteNombre;
 	private String comercialNombre;
+	private int clienteId;
 }
