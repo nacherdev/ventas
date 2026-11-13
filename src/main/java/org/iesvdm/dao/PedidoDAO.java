@@ -5,11 +5,13 @@ import java.util.Optional;
 
 import org.iesvdm.modelo.Pedido;
 import org.iesvdm.modelo.PedidoDetalle;
+import org.iesvdm.modelo.ClienteTotalPedidosDTO;
 
 public interface PedidoDAO {
 	void create(Pedido pedido);
 	List<PedidoDetalle> getAllDetails();
 	List<PedidoDetalle> findByComercialId(int comercialId);
+	List<ClienteTotalPedidosDTO> findClientesByComercialIdOrderByImporteTotal(int comercialId);
 	List<PedidoDetalle> findByClienteId(int clienteId);
 	Optional<Pedido> find(int id);
 	Optional<PedidoDetalle> findDetail(int id);

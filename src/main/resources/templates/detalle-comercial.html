@@ -12,7 +12,20 @@
             <dt class="col-sm-4">Apellido 2</dt><dd class="col-sm-8" th:text="${comercial.apellido2 ?: '-'}">apellido2</dd>
             <dt class="col-sm-4">Comisión</dt><dd class="col-sm-8" th:text="${comercial.comisión ?: '-'}">comisión</dd>
         </dl>
+        <h2 class="h4 mt-4">Estadísticas de pedidos</h2>
+        <dl class="row">
+            <dt class="col-sm-4">Número de pedidos</dt>
+            <dd class="col-sm-8" th:text="${estadisticasPedidos.numeroPedidos}">0</dd>
+            <dt class="col-sm-4">Importe total</dt>
+            <dd class="col-sm-8" th:text="${#numbers.formatDecimal(estadisticasPedidos.importeTotal, 1, 2)}">0.00</dd>
+            <dt class="col-sm-4">Importe medio por pedido</dt>
+            <dd class="col-sm-8" th:text="${#numbers.formatDecimal(estadisticasPedidos.importeMedio, 1, 2)}">0.00</dd>
+        </dl>
         <h2 class="h4 mt-4">Pedidos del comercial</h2>
+        <p class="mb-2">
+            <span class="badge text-bg-success">Verde</span> Pedido(s) con el importe máximo.
+            <span class="badge text-bg-warning ms-2">Amarillo</span> Pedido(s) con el importe mínimo.
+        </p>
         <div class="table-responsive">
             <table class="table table-striped">
                 <thead>
@@ -22,7 +35,8 @@
                     <tr th:if="${#lists.isEmpty(pedidos)}">
                         <td colspan="4">Este comercial no tiene pedidos.</td>
                     </tr>
-                    <tr th:each="pedido : ${pedidos}">
+                    <tr th:each="pedido : ${pedidos}"
+                        th:classappend="${estadisticasPedidos.importeMaximo != null and pedido.total == estadisticasPedidos.importeMaximo} ? 'table-success' : (${estadisticasPedidos.importeMinimo != null and pedido.total == estadisticasPedidos.importeMinimo} ? 'table-warning' : '')">
                         <td th:text="${pedido.id}">0</td>
                         <td th:text="${pedido.total}">0.00</td>
                         <td th:text="${pedido.fecha ?: '-'}">fecha</td>
@@ -31,6 +45,26 @@
                                th:text="${pedido.clienteNombre}"
                                target="_blank" rel="noopener noreferrer">cliente</a>
                         </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <h2 class="h4 mt-4">Clientes por importe total de pedidos</h2>
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr><th>Cliente</th><th>Importe total</th></tr>
+                </thead>
+                <tbody>
+                    <tr th:if="${#lists.isEmpty(clientesPorImporte)}">
+                        <td colspan="2">Este comercial no tiene clientes con pedidos.</td>
+                    </tr>
+                    <tr th:each="cliente : ${clientesPorImporte}">
+                        <td>
+                            <a th:href="@{/clientes/{id}(id=${cliente.clienteId})}"
+                               th:text="${cliente.clienteNombre}">cliente</a>
+                        </td>
+                        <td th:text="${#numbers.formatDecimal(cliente.importeTotal, 1, 2)}">0.00</td>
                     </tr>
                 </tbody>
             </table>

@@ -7,6 +7,7 @@ import java.util.Optional;
 
 import org.iesvdm.modelo.Pedido;
 import org.iesvdm.modelo.PedidoDetalle;
+import org.iesvdm.modelo.ClienteTotalPedidosDTO;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -76,6 +77,29 @@ public class PedidoDAOImpl implements PedidoDAO {
 		return jdbcTemplate.query(
 				DETALLE_QUERY + " WHERE p.id_comercial = ? ORDER BY p.id",
 				PEDIDO_DETALLE_ROW_MAPPER,
+				comercialId);
+	}
+
+	@Override
+	public List<ClienteTotalPedidosDTO> findClientesByComercialIdOrderByImporteTotal(int comercialId) {
+		return jdbcTemplate.query("""
+				SELECT c.id AS cliente_id,
+				       CONCAT_WS(' ', c.nombre, c.apellido1, c.apellido2) AS cliente_nombre,
+				       SUM(p.total) AS importe_total
+				FROM cliente c
+				JOIN pedido p ON p.id_cliente = c.id
+				WHERE EXISTS (
+				    SELECT 1
+				    FROM pedido pc
+				    WHERE pc.id_cliente = c.id AND pc.id_comercial = ?
+				)
+				GROUP BY c.id, c.nombre, c.apellido1, c.apellido2
+				ORDER BY importe_total DESC, c.id
+				""",
+				(rs, rowNum) -> new ClienteTotalPedidosDTO(
+						rs.getInt("cliente_id"),
+						rs.getString("cliente_nombre"),
+						rs.getDouble("importe_total")),
 				comercialId);
 	}
 
