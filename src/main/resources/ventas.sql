@@ -19,6 +19,28 @@ CREATE TABLE comercial (
   comisión FLOAT
 );
 
+CREATE TABLE IF NOT EXISTS `cliente_has_comercial` (
+  `cliente_id` INT UNSIGNED NOT NULL,
+  `comercial_id` INT UNSIGNED NOT NULL,
+  PRIMARY KEY (`cliente_id`, `comercial_id`),
+  INDEX `fk_cliente_has_comercial_comercial1_idx` (`comercial_id` ASC) VISIBLE,
+  INDEX `fk_cliente_has_comercial_cliente1_idx` (`cliente_id` ASC) VISIBLE,
+  CONSTRAINT `fk_cliente_has_comercial_cliente1`
+    FOREIGN KEY (`cliente_id`)
+    REFERENCES `cliente` (`id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_cliente_has_comercial_comercial1`
+    FOREIGN KEY (`comercial_id`)
+    REFERENCES `comercial` (`id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION)
+ENGINE = InnoDB;
+
+ALTER TABLE `cliente_has_comercial`
+  ADD COLUMN `fecha` DATE NULL,
+  ADD COLUMN `prioridad` INT UNSIGNED NOT NULL DEFAULT 0;
+
 CREATE TABLE pedido (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   total DOUBLE NOT NULL,
@@ -28,6 +50,7 @@ CREATE TABLE pedido (
   FOREIGN KEY (id_cliente) REFERENCES cliente(id),
   FOREIGN KEY (id_comercial) REFERENCES comercial(id)
 );
+
 
 INSERT INTO cliente VALUES(1, 'Aarón', 'Rivero', 'Gómez', 'Almería', 100);
 INSERT INTO cliente VALUES(2, 'Adela', 'Salas', 'Díaz', 'Granada', 200);

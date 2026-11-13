@@ -1,10 +1,18 @@
 package org.iesvdm.controlador;
 
+import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.iesvdm.modelo.Cliente;
+import org.iesvdm.modelo.ClienteComercial;
+import org.iesvdm.modelo.Comercial;
+import org.iesvdm.servicios.ClienteComercialService;
 import org.iesvdm.servicios.ClienteService;
+import org.iesvdm.servicios.ComercialService;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,9 +28,14 @@ import org.springframework.web.servlet.view.RedirectView;
 public class ClienteController {
 
     private final ClienteService clienteService;
+    private final ComercialService comercialService;
+    private final ClienteComercialService clienteComercialService;
 
-    public ClienteController(ClienteService clienteService) {
+    public ClienteController(ClienteService clienteService, ComercialService comercialService,
+            ClienteComercialService clienteComercialService) {
         this.clienteService = clienteService;
+        this.comercialService = comercialService;
+        this.clienteComercialService = clienteComercialService;
     }
 
     @GetMapping("/clientes")
@@ -72,10 +85,26 @@ public class ClienteController {
     public String editar(Model model, @PathVariable int id) {
         return clienteService.find(id)
                 .map(cliente -> {
-                    model.addAttribute("cliente", cliente);
+                    prepararEdicion(model, cliente);
                     return "editar-cliente";
                 })
                 .orElse("redirect:/clientes");
+    }
+
+    private void prepararEdicion(Model model, Cliente cliente) {
+        List<ClienteComercial> comercialesVinculados =
+                clienteComercialService.listByClienteId(cliente.getId());
+        Set<Integer> idsVinculados = new HashSet<>();
+        for (ClienteComercial vinculo : comercialesVinculados) {
+            idsVinculados.add(vinculo.getComercialId());
+        }
+        List<Comercial> comercialesDisponibles = comercialService.listAll().stream()
+                .filter(comercial -> !idsVinculados.contains(comercial.getId()))
+                .toList();
+
+        model.addAttribute("cliente", cliente);
+        model.addAttribute("comercialesDisponibles", comercialesDisponibles);
+        model.addAttribute("comercialesVinculados", comercialesVinculados);
     }
 
     @PostMapping("/clientes/editar/{id}")
@@ -85,6 +114,32 @@ public class ClienteController {
         return new RedirectView("/clientes");
     }
 
+    @PostMapping("/clientes/editar/{id}/comerciales")
+    public RedirectView anadirComercial(@PathVariable int id,
+            @RequestParam int comercialId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fecha,
+            @RequestParam int prioridad,
+            RedirectAttributes redirectAttributes) {
+        if (clienteService.find(id).isEmpty() || comercialService.find(comercialId).isEmpty()) {
+            redirectAttributes.addFlashAttribute("error", "El cliente o el comercial no existe.");
+        } else if (prioridad < 0) {
+            redirectAttributes.addFlashAttribute("error", "La prioridad no puede ser negativa.");
+        } else if (clienteComercialService.add(id, comercialId, fecha, prioridad)) {
+            redirectAttributes.addFlashAttribute("mensaje", "Comercial añadido al cliente.");
+        } else {
+            redirectAttributes.addFlashAttribute("error", "El comercial ya está vinculado a este cliente.");
+        }
+        return new RedirectView("/clientes/editar/" + id);
+    }
+
+    @PostMapping("/clientes/editar/{id}/comerciales/{comercialId}/borrar")
+    public RedirectView borrarComercial(@PathVariable int id, @PathVariable int comercialId,
+            RedirectAttributes redirectAttributes) {
+        clienteComercialService.delete(id, comercialId);
+        redirectAttributes.addFlashAttribute("mensaje", "Comercial eliminado del cliente.");
+        return new RedirectView("/clientes/editar/" + id);
+    }
+
     @PostMapping("/clientes/borrar/{id}")
     public RedirectView submitBorrar(@PathVariable int id, RedirectAttributes redirectAttributes) {
         try {
@@ -92,7 +147,7 @@ public class ClienteController {
             redirectAttributes.addFlashAttribute("mensaje", "El cliente se ha eliminado.");
         } catch (DataIntegrityViolationException exception) {
             redirectAttributes.addFlashAttribute("error",
-                    "No se puede eliminar el cliente porque tiene pedidos asociados.");
+                    "No se puede eliminar el cliente porque tiene pedidos o comerciales asociados.");
         }
         return new RedirectView("/clientes");
     }
